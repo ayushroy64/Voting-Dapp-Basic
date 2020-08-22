@@ -48,8 +48,7 @@
 	    	</div>
 	    	</br>
 
-            <!--<p class="small mt-5">Developed with  <i class="fas fa-heart mr-1 text-danger"></i>by <a href="https://www.youtube.com/c/CodeXpert" class="font-weight-bold text-danger" target="_blank"> CodeXpert</a></p>!-->
-    	</center>
+
         <hr>
     </div>
 
@@ -66,6 +65,7 @@
         crossorigin="anonymous"></script>
 
     <script>
+        var myContract;
         async function CheckMetamaskConnection() {
             // Modern dapp browsers...
             if (window.ethereum) {
@@ -97,6 +97,17 @@
         $(document).ready(async function () {
             var IsMetamask = await CheckMetamaskConnection();
             if (IsMetamask) {
+                myContract = await web3.eth.contract(SmartContractABI).at(SmartContractAddress);
+                getCandidate(1);
+                getCandidate(2);
+
+                await myContract.eventVote({
+                    fromBlock:0
+                }, function(err, event){
+                    console.log("event :", event);
+                    getCandidate(event.args._candidateid.toNumber());
+                });
+                console.log("myContract :", myContract);
                 console.log("Metamask detected!")
             } else {
                 console.log("Metamask not detected");
@@ -110,6 +121,26 @@
 				});
             }
         });
+
+        async function getCandidate(cad){
+            await myContract.candidates(cad, function(err, result){
+                if (!err) {
+                    console.log("result : ", result);
+                    document.getElementById("cad" + cad).innerHTML = result[1];
+                    document.getElementById("cad"+cad+'count').innerHTML = result[2].toNumber();
+                }
+            });
+        }
+
+        async function Vote(cad){
+            await myContract.vote(cad, function(err, result){
+                if(!err){
+                    console.log("We are winning!");
+                } else{
+                    console.log("Can not connect to the smart contract");
+                }
+            })
+        }
 
     </script>
 </body>
